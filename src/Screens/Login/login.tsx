@@ -6,10 +6,10 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 import { useEffect, useState } from 'react';
 import { useApi } from '../../utils/hooks/useApi';
-import { endpoints } from '../../utils/API/endpoints';
+import { baseUrl, endpoints } from '../../utils/API/endpoints';
 import { handleParamsData } from '../../utils/API/APIRelatedMethods';
 import FormButton from '../../reusableComponents/FormButton';
-import { LogInStore } from '../../utils/Stores/ZustandStore';
+import { LogInStore, OrgLogInStore } from '../../utils/Stores/ZustandStore';
 import { LogInStoreType } from '../../utils/Stores/zustandStoreTypes';
 import { useNavigation } from '@react-navigation/core';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -17,7 +17,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 export type loginPayload = {
     email: string,
     password: string,
-    tenantCode: string
+    // tenantCode: string
 }
 export default function Login() {
     const {
@@ -30,9 +30,13 @@ export default function Login() {
         // resolver: yupResolver(loginValidationSchema),
     });
     const updateLOGIN_Data = LogInStore((state) => state.updateLOGIN_Data);
+    const updateOrgLOGIN_Data = OrgLogInStore((state) => state.updateOrgLOGIN_Data);
+
     const LOGIN_Data = LogInStore((state) => state.LOGIN_Data);
 
     const { data: LoginResponse, loading: loginLoading, request: fetchLogin, status: loginApiCallStatus } = useApi<any>();
+    const { data: OrgLoginResponse, loading: OrgloginLoading, request: fetchOrgLogin, status: OrgloginApiCallStatus } = useApi<any>();
+
     const [logInError, setLoginError] = useState<LogInStoreType | undefined>(undefined);
     const navigation = useNavigation<NativeStackNavigationProp<any>>();
 
@@ -56,13 +60,13 @@ export default function Login() {
             let payload: loginPayload = {
                 'email': values?.email,
                 'password': values?.password,
-                'tenantCode': values?.tenantCode,
+                // 'tenantCode': values?.tenantCode,
             };
             // let payload = {
             //     "uname": "admin",
             //     "pwd": "admin"
             // };
-            let url = handleParamsData(endpoints?.login, {});
+            let url = handleParamsData(`${endpoints?.login}/PE`, {});
             // console.log('payload', payload);
 
             setLoginError(undefined);
@@ -74,19 +78,52 @@ export default function Login() {
                 timeout: 10000, // 10 seconds
                 data: payload,
             });
+            if (response?.token) {
+
+                let defaultOrg = response?.organizations?.items[0];
+                let orgLoginResponse = { ...response };
+                orgLoginResponse.defaultOrg = defaultOrg;
+                updateLOGIN_Data(orgLoginResponse);
+
+                let OrgUrl = generateURLforToSelectOrgAPI(defaultOrg?.clientId, defaultOrg?.organizationId)
+                let selectedCompanyUrl = handleParamsData(OrgUrl, {});
+                const responseFromSelectedCompany = await fetchOrgLogin({
+                    url: selectedCompanyUrl,
+                    method: 'GET',
+                    timeout: 10000, // 10 seconds
+                    // data: payload,
+                    token: response?.token
+                });
+                console.log('responseFromSelectedCompany', responseFromSelectedCompany);
+            }
             console.log('Login response:', response);
         } catch (error) {
             setLoginError('Something went wrong, try again');
             console.error('Error fetching Login:', error);
         }
     };
+    // useEffect(() => {
+    //     if (LoginResponse) {
+    //         console.log('LoginResponse', LoginResponse);
+    //         let defaultOrg = LoginResponse?.organizations?.items[0];
+    //         if (defaultOrg) {
+    //             let orgLoginResponse = { ...LoginResponse };
+    //             orgLoginResponse.defaultOrg = defaultOrg;
+    //             updateLOGIN_Data(orgLoginResponse);
+    //         } else {
+    //             updateLOGIN_Data(LoginResponse);
+    //         }
+    //         // navigation.replace('BottomTabs');
+    //     }
+    // }, [LoginResponse, updateLOGIN_Data]);
+
     useEffect(() => {
-        if (LoginResponse) {
-            console.log('LoginResponse', LoginResponse);
-            updateLOGIN_Data(LoginResponse);
+        if (OrgLoginResponse) {
+            updateOrgLOGIN_Data(OrgLoginResponse);
+
             navigation.replace('BottomTabs');
         }
-    }, [LoginResponse, updateLOGIN_Data]);
+    }, [OrgLoginResponse, updateOrgLOGIN_Data]);
 
     useEffect(() => {
         console.log('errors', errors);
@@ -108,7 +145,7 @@ export default function Login() {
                             control={control}
                             style={styles.input}
                             secureTextEntry={false}
-                            defaultValue="SKML"
+                            defaultValue="PE"
                             returnKeyType="next" // Shows "Next" on the keyboard
                         // onSubmitEditing={() => secondInputRef.current.focus()} // Move to the next input
                         />
@@ -120,7 +157,7 @@ export default function Login() {
                             control={control}
                             style={styles.input}
                             secureTextEntry={false}
-                            defaultValue="pact5@gmail.com"
+                            defaultValue="kumaryajhna4567@gmail.com"
                             returnKeyType="next" // Shows "Next" on the keyboard
                         // onSubmitEditing={() => secondInputRef.current.focus()} // Move to the next input
                         />
@@ -141,7 +178,7 @@ export default function Login() {
                                     />
                                 </TouchableOpacity>
                             }
-                            defaultValue="123456"
+                            defaultValue="kumar"
                             // ref={secondInputRef} // Forward the ref correctly
                             returnKeyType="done" // Shows "Done" on the keyboard
                             onSubmitEditing={() => onSubmit(getValues())} // Action on done
@@ -240,3 +277,7 @@ const styles = StyleSheet.create({
     },
 });
 
+const generateURLforToSelectOrgAPI = (clientId, OrgId) => {
+    let url = `${baseUrl}/${clientId}/select-organization/${OrgId}`;
+    return url;
+};

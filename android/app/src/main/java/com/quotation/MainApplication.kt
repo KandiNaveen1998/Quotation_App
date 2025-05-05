@@ -1,4 +1,4 @@
-package com.srm_app
+package com.quotation
 
 import android.app.Application
 import com.facebook.react.PackageList

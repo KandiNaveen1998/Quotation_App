@@ -23,3 +23,37 @@ export type LogInStoreType = {
   clearLOGIN_Data: () => void;
   updateLOGIN_Data: (data: LoginData) => void;
 };
+
+//////////////////////
+
+export interface OrganizationItem {
+  userId: number;
+  organizationUserId: number;
+  organizationId: number;
+  clientId: number;
+  name: string;
+}
+
+export interface Organizations {
+  items: OrganizationItem[];
+}
+
+export interface User {
+  id: number;
+  name: string;
+  firstname: string;
+  lastname: string;
+  username: string;
+  email: string;
+  phoneNumber: string;
+  lastLoginAt: string | null;
+  active: number;
+  token: string;
+  organizations: Organizations;
+}
+
+export type OrgLogInStoreType = {
+  OrgLOGIN_Data: User | undefined | null;
+  clearOrgLOGIN_Data: () => void;
+  updateOrgLOGIN_Data: (data: User) => void;
+};
