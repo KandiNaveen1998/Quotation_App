@@ -1,4 +1,4 @@
-  // import {useState, useCallback} from 'react';
+// import {useState, useCallback} from 'react';
 // import axios, {AxiosRequestConfig, AxiosResponse} from 'axios';
 // import {useToast} from './ToastContext'; // Your custom toast hook
 // import {LogInStore} from '../Stores/ZustandStore';
@@ -103,7 +103,7 @@ type UseApiReturn<T> = {
   status: number;
 };
 
-export function useApi<T = any>(): UseApiReturn<T> {
+export function useApi<T = any>(tokenFromParent?: string): UseApiReturn<T> {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -120,9 +120,8 @@ export function useApi<T = any>(): UseApiReturn<T> {
 
       try {
         // Normally you'd get tokens from Zustand or localStorage
-        const token = LOGIN_Data?.loginToken || '';
+        const token = LOGIN_Data?.loginToken || tokenFromParent || ''; //if it  getting undefined then i want send
         const xShowroomToken = LOGIN_Data?.selectedShowroom?.token || '';
-
         const headersWithAuth = {
           ...(config.headers || {}),
           ...(token && {Authorization: `Bearer ${token}`}),

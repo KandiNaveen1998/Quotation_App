@@ -1,4 +1,4 @@
-package com.srm_app
+package com.quotation
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
